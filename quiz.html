@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Викторина по истории Казахстана</title>
+<style>
+  body {
+    font-family: "Montserrat", sans-serif;
+    background: #f3f3f3;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    max-width: 600px;
+    width: 90%;
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+
+  h2 { color: #333; }
+  #score { font-weight: bold; margin: 10px 0; }
+  .question { margin: 15px 0; }
+
+  button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+  }
+
+  button:hover { background: #0056b3; }
+
+  #final {
+    display: none;
+    color: #007b00;
+    font-size: 18px;
+    margin-top: 15px;
+  }
+
+  input {
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 80%;
+    max-width: 300px;
+  }
+
+  @media (max-width: 480px) {
+    button {
+      width: 100%;
+      font-size: 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="form">
+  <h2>🧭 Викторина по истории Казахстана</h2>
+  <p>Введите ФИО, чтобы начать:</p>
+  <input type="text" id="fio" placeholder="Ваше ФИО">
+  <br><br>
+  <button onclick="startQuiz()">Начать</button>
+</div>
+
+<div class="container" id="quiz" style="display:none;">
+  <div id="score">Очки: 0 / 20</div>
+  <div id="questionBox"></div>
+  <div id="final">Поздравляем! Вы завершили викторину 🎉<br>Результат отправлен.</div>
+</div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbz1oisazfzM1WWScFdlQOq-FAYcVErytHzcXr5BhlYziXGIJA9XH1zW6jJruKdFtD6n/exec";
+
+let fio = "";
+let score = 0;
+let current = 0;
+
+const questions = [
+  {q:"Когда Казахстан стал независимым?", a:["1986","1991","1995"], c:1},
+  {q:"Кто был первым президентом Казахстана?", a:["Касым-Жомарт Токаев","Динмухамед Кунаев","Нурсултан Назарбаев"], c:2},
+  {q:"Столицей Казахстана до 1997 года был город:", a:["Алматы","Кызылорда","Шымкент"], c:0},
+  {q:"Какой поэт написал 'Кара сөздер'?", a:["Абай Кунанбаев","Жамбыл Жабаев","Сакен Сейфуллин"], c:0},
+  {q:"Когда была принята первая Конституция независимого Казахстана?", a:["1993","1995","2000"], c:0},
+  {q:"Как назывался древний город на месте Туркестана?", a:["Отрар","Ясы","Тараз"], c:1},
+  {q:"Какое восстание произошло в 1916 году?", a:["Против джунгар","Против русской мобилизации","Против Золотой Орды"], c:1},
+  {q:"Кто руководил восстанием 1837–1847 гг.?", a:["Кенесары Касымулы","Сырым Датулы","Исатай Тайманов"], c:0},
+  {q:"Какой хан основал Казахское ханство?", a:["Жаныбек и Керей","Абылай","Тауке"], c:0},
+  {q:"Когда было образовано Казахское ханство?", a:["1465","1565","1665"], c:0},
+  {q:"Какой поэт известен как 'Акын народа'?", a:["Жамбыл Жабаев","Абай Кунанбаев","Сейфуллин"], c:0},
+  {q:"Кто был последним ханом Среднего жуза?", a:["Абылай","Кенесары","Бухар"], c:1},
+  {q:"Какой город был древним центром Великого шелкового пути?", a:["Тараз","Актобе","Костанай"], c:0},
+  {q:"Когда Казахстан вступил в ООН?", a:["1991","1992","1993"], c:1},
+  {q:"Когда была принята действующая Конституция?", a:["1993","1995","2000"], c:1},
+  {q:"Какой мавзолей является символом Туркестана?", a:["Карахана","Алаша-хана","Ходжи Ахмеда Ясави"], c:2},
+  {q:"Кто был автором 'Алаш Орда'?", a:["Алихан Букейханов","Ахмет Байтурсынов","Миржакып Дулатов"], c:0},
+  {q:"Когда была создана Алаш-Орда?", a:["1917","1919","1920"], c:0},
+  {q:"Какой город был первым столичным центром КазАССР?", a:["Оренбург","Кызылорда","Алматы"], c:0},
+  {q:"Когда Казахстан переименовал столицу в Астану (впервые)?", a:["1997","1998","1999"], c:1}
+];
+
+function startQuiz() {
+  fio = document.getElementById("fio").value.trim();
+  if (!fio) return alert("Введите ФИО!");
+  document.getElementById("form").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+  showQuestion();
+}
+
+function showQuestion() {
+  const qBox = document.getElementById("questionBox");
+  if (current >= questions.length) {
+    document.getElementById("final").style.display = "block";
+    sendToGoogle();
+    return;
+  }
+
+  const q = questions[current];
+  let html = `<div class='question'><b>${current+1}. ${q.q}</b><br>`;
+  q.a.forEach((ans, i) => {
+    html += `<button onclick='checkAnswer(${i})'>${ans}</button><br>`;
+  });
+  html += "</div>";
+  qBox.innerHTML = html;
+  document.getElementById("score").innerText = `Очки: ${score} / ${questions.length}`;
+}
+
+function checkAnswer(i) {
+  const q = questions[current];
+  const buttons = document.querySelectorAll("#questionBox button");
+  if (i === q.c) {
+    score++;
+    buttons[i].style.background = "green";
+  } else {
+    buttons[i].style.background = "red";
+    buttons[q.c].style.background = "green";
+  }
+  setTimeout(() => {
+    current++;
+    showQuestion();
+  }, 600);
+  document.getElementById("score").innerText = `Очки: ${score} / ${questions.length}`;
+}
+
+function sendToGoogle() {
+  const data = { fio: fio, score: score, total: questions.length, date: new Date().toLocaleString("ru-RU") };
+  fetch(scriptURL, { method: "POST", mode: "no-cors", body: JSON.stringify(data) });
+}
+</script>
+</body>
+</html>
